@@ -41,25 +41,64 @@ export default function App() {
 
       <BarraDeEscritura 
       modoOscuro={modoOscuro} 
-      alEnviar={(texto) => {
+      alEnviar={async(texto) => {
         const idUsuario = Date.now().toString();
         const nuevoMensaje = { id: idUsuario, texto, esUsuario: true };
         setMensajesActuales(prev => [...prev, nuevoMensaje]);
 
         setIaPensando(true);
 
-        setTimeout(() => {
-          const idIa = (Date.now() + 1).toString();
-          const respuestaIA = { 
-            id: idIa, 
-            texto: '¡Mensaje recibido! Todavía no estoy conectada a Ollama, pero esta será mi respuesta.', 
-            esUsuario: false };
-            
-          setMensajesActuales(prev => [...prev, respuestaIA]);
+        try {
+          const urlNgrok = 'https://369d-2806-261-498-e57-41b8-de4b-b786-2221.ngrok-free.app/api/chat';
 
+          const respuesta = await fetch(urlNgrok, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'ngork-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({
+              model: 'llama3.2',
+              messages:[ {role: 'user', content: texto} ],
+              stream: false
+             })
+          });
+
+          const textoCrudo = await respuesta.text();
+
+          try {
+              const datos = JSON.parse(textoCrudo);
+              
+              if (datos.message && datos.message.content) {
+                const idIA = (Date.now() + 1).toString();
+                const respuestaIA = { id: idIA, texto: datos.message.content, esUsuario: false };
+                setMensajesActuales(prev => [...prev, respuestaIA]);
+              } else {
+                console.error("El JSON llegó pero no tiene el mensaje:", datos);
+              }
+
+            } catch (errorParseo) {
+              console.error("¡ALERTA! El servidor no mandó un JSON. Esto fue lo que mandó:", textoCrudo);
+              const idIA = (Date.now() + 1).toString();
+              const respuestaIA = { 
+                id: idIA, 
+                texto: `Error del servidor: "${textoCrudo}"`, 
+                esUsuario: false 
+              };
+              setMensajesActuales(prev => [...prev, respuestaIA]);
+            }
+        } catch (error) {
+          console.error('Error conectando con Ollama:', error);
+          const mensajeError = {
+            id: (Date.now() + 1).toString(),
+            texto: 'Lo siento, ha ocurrido un error al conectar con el modelo.',
+            esUsuario: false
+          };
+          setMensajesActuales(prev => [...prev, mensajeError]);
+        } finally {
           setIaPensando(false);
-        }, 2000);
-      }} 
+        }
+      }}
       />
 
     </KeyboardAvoidingView>
