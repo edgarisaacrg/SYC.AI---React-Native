@@ -5,6 +5,7 @@ import Header from './src/components/Header';
 import BurbujaDeMensaje from './src/components/BurbujaDeMensaje';
 import BarraDeEscritura from './src/components/BarraDeEscritura';
 import AnimacionPensando from './src/components/AnimacionPensando';
+import VentanaConfiguracion from './src/components/VentanaConfiguracion';
 
 export default function App() {
   const [modoOscuro, setModoOscuro] = React.useState(true);
@@ -15,6 +16,9 @@ export default function App() {
     { id: 1, texto: 'Hola, soy SYC. ¿En qué te puedo ayudar hoy?', esUsuario: false }
   ]);
 
+  const [mostrarConfiguracion, setMostrarConfiguracion] = useState(false);
+  const [urlOllama, setUrlOllama] = useState('');
+
   return (
     <KeyboardAvoidingView 
     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -24,7 +28,7 @@ export default function App() {
       <Header 
         modoOscuro={modoOscuro} 
         alPrecionarHistorial={() => console.log('Abrir historial')} 
-        alPresionarConfiguracion={() => console.log('Abrir configuración')}
+        alPresionarConfiguracion={() => setMostrarConfiguracion(true)}
       />
 
       <ScrollView 
@@ -49,7 +53,14 @@ export default function App() {
         setIaPensando(true);
 
         try {
-          const urlNgrok = 'https://369d-2806-261-498-e57-41b8-de4b-b786-2221.ngrok-free.app/api/chat';
+          const urlNgrok = `${urlOllama.replace(/\/$/, '')}/api/chat`;
+
+          const historialParaOllama = mensajesActuales.slice(-10).map(msg => ({
+            role: msg.esUsuario ? 'user' : 'assistant',
+            content: msg.textos
+          }));
+          
+          historialParaOllama.push({ role: 'user', content: texto });
 
           const respuesta = await fetch(urlNgrok, {
             method: 'POST',
@@ -59,7 +70,7 @@ export default function App() {
             },
             body: JSON.stringify({
               model: 'llama3.2',
-              messages:[ {role: 'user', content: texto} ],
+              messages:historialParaOllama,
               stream: false
              })
           });
@@ -99,6 +110,15 @@ export default function App() {
           setIaPensando(false);
         }
       }}
+      />
+
+      {/* Ventana de configuración */}
+      <VentanaConfiguracion 
+        visible={mostrarConfiguracion} 
+        alCerrar={() => setMostrarConfiguracion(false)}
+        modoOscuro={modoOscuro}
+        urlOllama={urlOllama}
+        setUrlOllama={setUrlOllama}
       />
 
     </KeyboardAvoidingView>
