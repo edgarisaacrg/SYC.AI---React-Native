@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SI-Ollama-RN",
-    "slug": "SI-Ollama-RN",
+    "name": "SYC AI",
+    "slug": "syc-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,10 +20,16 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.syc.ollamaReact"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1ee2bedb-c5e3-408f-acb7-557e3ea26e0a"
+      }
     }
   }
 }
